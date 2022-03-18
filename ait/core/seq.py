@@ -24,6 +24,7 @@ import os
 import math
 import struct
 import sys
+import ait
 
 from ait.core import cmd, util
 
@@ -140,14 +141,29 @@ class Seq(object):
         if stream is None:
             stream = sys.stdout
 
-        stream.write("# seqid   : %u\n" % self.seqid)
-        stream.write("# version : %u\n" % self.version)
-        stream.write("# crc32   : 0x%04x\n" % self.crc32)
-        stream.write("# ncmds   : %u\n" % len(self.commands))
-        stream.write("# duration: %.3fs\n" % self.duration)
-        stream.write("\n")
+        print(type(self.lines[0]))
+        print(self.lines[0].cmd.argdefns[12])
+        print(type(self.lines[0].cmd.args[9]))
+
+        def look_for_bytearrays(line): #line is of type seqcmd
+            args = line.cmd.args
+            i = 0
+            for i in range(len(args)):
+                if type(args[i]) == bytes:
+                    print(f"found bytearray at index {i}")
+                    line.cmd.args[i] = args[i].hex()
+            return line
+
+        
+        # stream.write("# seqid   : %u\n" % self.seqid)
+        # stream.write("# version : %u\n" % self.version)
+        # stream.write("# crc32   : 0x%04x\n" % self.crc32)
+        # stream.write("# ncmds   : %u\n" % len(self.commands))
+        # stream.write("# duration: %.3fs\n" % self.duration)
+        # stream.write("\n")
 
         for line in self.lines:
+            line = look_for_bytearrays(line)
             stream.write(str(line))
             stream.write("\n")
 
@@ -255,31 +271,31 @@ class Seq(object):
             filename = self.binpath
 
         with open(filename, "wb") as output:
-            # Magic Number
-            output.write(struct.pack(">H", self.magic))
-            # Upload Type
-            output.write(struct.pack("B", 9))
-            # Version
-            output.write(struct.pack("B", self.version))
-            # Number of Commands
-            output.write(struct.pack(">H", len(self.commands)))
-            # Sequence ID
-            output.write(struct.pack(">H", self.seqid))
-            # CRC Placeholder
-            output.write(struct.pack(">I", 0))
+            # # Magic Number
+            # output.write(struct.pack(">H", self.magic))
+            # # Upload Type
+            # output.write(struct.pack("B", 9))
+            # # Version
+            # output.write(struct.pack("B", self.version))
+            # # Number of Commands
+            # output.write(struct.pack(">H", len(self.commands)))
+            # # Sequence ID
+            # output.write(struct.pack(">H", self.seqid))
+            # # CRC Placeholder
+            # output.write(struct.pack(">I", 0))
 
-            pad = struct.pack("B", 0)
-            for _n in range(20):
-                output.write(pad)
+            # pad = struct.pack("B", 0)
+            # for _n in range(20):
+            #     output.write(pad)
 
             for line in self.lines:
                 output.write(line.encode())
 
-        self.crc32 = util.crc32File(filename, 0)
+        # self.crc32 = util.crc32File(filename, 0)
 
-        with open(filename, "r+b") as output:
-            output.seek(28)
-            output.write(struct.pack(">I", self.crc32))
+        # with open(filename, "r+b") as output:
+        #     output.seek(28)
+        #     output.write(struct.pack(">I", self.crc32))
 
     def write_text(self, filename=None):
         """Writes a text representation of this sequence to the given filename
@@ -289,7 +305,7 @@ class Seq(object):
             filename = self.txtpath
 
         with open(filename, "wt") as output:
-            self.printText(output)
+            self.print_text(output)
 
 
 class SeqPos(object):
@@ -402,7 +418,7 @@ class SeqCmd(SeqAtom):
 
     def encode(self):
         """Encodes this SeqCmd to binary and returns a bytearray."""
-        return self.attrs.encode() + self.delay.encode() + self.cmd.encode()
+        return self.cmd.encode()
 
     @classmethod
     def parse(cls, line, lineno, log, cmddict):

@@ -163,7 +163,12 @@ class ArgDefn(json.SlotSerializer, object):
                 primitive = int(self.enum[value])
 
         if self.type:
-            if self.type.validate(primitive, messages, self.name) is False:
+            if type(self.type) == ait.core.dtype.ArrayType:
+                element_type = self.type.type
+                for element in value:
+                    if element_type.validate(element, messages, self.name) is False:
+                        valid = False
+            elif self.type.validate(primitive, messages, self.name) is False:
                 valid = False
 
         if self.range:

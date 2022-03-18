@@ -266,8 +266,12 @@ class CmdAPI:
             raise TypeError("Unrecognized command: %s" % command)
 
         arg_defns = cmd_defn.argdefns
+        print(arg_defns)
+        print(args)
+        print(zip(arg_defns, args))
         for arg_defn, value in zip(arg_defns, args):
             if value is not None and arg_defn is not None:
+                print(f"argument {arg_defn.name} value is {value} and type is {arg_defn.type}") #REMOVE
                 if arg_defn.type.string:
                     parsed_args.append(value if type(value) is str else str(value))
                 elif arg_defn.enum:
@@ -276,6 +280,7 @@ class CmdAPI:
                     parsed_args.append(
                         util.toNumberOrStr(value) if type(value) is str else value
                     )
+                print(parsed_args)
 
         # Blindly append remaining args to our parsed list
         remaining_idx = len(parsed_args)
